@@ -11,11 +11,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="16dp"
-        android:text="\@tylersuehr7, you're the coolest! #AndriodDev\ntylersuehr@gmail.com"
+        android:text="\@tylersuehr7, you're the coolest! #AndriodDev\n\nEmail: tylersuehr@gmail.com\nWebsite: http://www.suehrsolutions.net"
         app:hashtagColor="@color/flamingo.900"
         app:mentionColor="@color/flamingo.900"
         app:phoneColor="@color/flamingo.900"
         app:emailColor="@color/flamingo.900"
         app:urlColor="@color/flamingo.900"
-        app:linkModes="mention|hashtag"/>
+        app:linkModes="mention|hashtag|email|url"/>
 </RelativeLayout>
