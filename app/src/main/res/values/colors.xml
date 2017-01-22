@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#e67c73</color>
+    <color name="colorPrimaryDark">#df6960</color>
+    <color name="colorAccent">#ffc5c2</color>
+
+    <color name="flamingo.900">#d54c43</color>
+</resources>

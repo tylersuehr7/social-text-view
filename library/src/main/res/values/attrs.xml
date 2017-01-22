@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="linkModes">
+        <flag name="hashtag" value="1"/>
+        <flag name="mention" value="2"/>
+        <flag name="phone" value="4"/>
+        <flag name="email" value="8"/>
+        <flag name="url" value="15"/>
+    </attr>
+
+    <declare-styleable name="SocialTextView">
+        <attr name="android:text"/>
+        <attr name="underlineEnabled" format="boolean"/>
+        <attr name="hashtagColor" format="color"/>
+        <attr name="mentionColor" format="color"/>
+        <attr name="phoneColor" format="color"/>
+        <attr name="emailColor" format="color"/>
+        <attr name="urlColor" format="color"/>
+        <attr name="selectedColor" format="color"/>
+        <attr name="linkModes"/>
+    </declare-styleable>
+</resources>
