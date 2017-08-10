@@ -11,31 +11,6 @@ making sure when you touch it, it's within the bounds before triggering the call
 ### Example
 ![Screenshot](https://github.com/tylersuehr7/socialtextview/blob/master/img_example.png "Screenshot")
 
-### Code
-This uses custom XML attributes defined in *attrs.xml*:
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <attr name="linkModes">
-        <flag name="hashtag" value="0"/>
-        <flag name="mention" value="1"/>
-        <flag name="phone" value="2"/>
-        <flag name="email" value="4"/>
-        <flag name="url" value="8"/>
-    </attr>
-    <declare-styleable name="SocialTextView">
-        <attr name="android:text"/>
-        <attr name="underlineEnabled" format="boolean"/>
-        <attr name="hashtagColor" format="color"/>
-        <attr name="mentionColor" format="color"/>
-        <attr name="phoneColor" format="color"/>
-        <attr name="emailColor" format="color"/>
-        <attr name="urlColor" format="color"/>
-        <attr name="selectedColor" format="color"/>
-        <attr name="linkModes"/>
-    </declare-styleable>
-</resources>
-```
 #### Example Layout Usage:
 ```xml
 <com.tylersuehr.socialtextview.SocialTextView
