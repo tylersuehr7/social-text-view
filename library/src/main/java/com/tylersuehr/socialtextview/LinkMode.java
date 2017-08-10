@@ -6,11 +6,11 @@ import java.io.Serializable;
  * Created by tyler on 1/21/2017.
  */
 public final class LinkMode implements Serializable {
-    public static final int MODE_HASHTAG = 0;
-    public static final int MODE_MENTION = 1;
-    public static final int MODE_PHONE = 2;
-    public static final int MODE_EMAIL_ADDRESS = 3;
-    public static final int MODE_WEB_URL = 4;
+    public static final int FLAG_HASHTAG = 1;
+    public static final int FLAG_MENTION = 2;
+    public static final int FLAG_PHONE =   4;
+    public static final int FLAG_EMAIL =   8;
+    public static final int FLAG_URL =    16;
     private final int mode;
 
 
@@ -21,15 +21,15 @@ public final class LinkMode implements Serializable {
     @Override
     public String toString() {
         switch (mode) {
-            case MODE_HASHTAG:
+            case FLAG_HASHTAG:
                 return "Hashtag";
-            case MODE_MENTION:
+            case FLAG_MENTION:
                 return "Mention";
-            case MODE_PHONE:
+            case FLAG_PHONE:
                 return "Phone";
-            case MODE_EMAIL_ADDRESS:
+            case FLAG_EMAIL:
                 return "Email Address";
-            case MODE_WEB_URL:
+            case FLAG_URL:
                 return "Web URL";
             default:
                 throw new IllegalStateException("Invalid mode!");
@@ -50,18 +50,17 @@ public final class LinkMode implements Serializable {
      */
     String getPattern() {
         switch (mode) {
-            case MODE_HASHTAG:
+            case FLAG_HASHTAG:
                 return "(?:^|\\s|$)#[\\p{L}0-9_]*";
-            case MODE_MENTION:
+            case FLAG_MENTION:
                 return "(?:^|\\s|$|[.])@[\\p{L}0-9_]*";
-            case MODE_PHONE:
+            case FLAG_PHONE:
                 return Patterns.PHONE.pattern();
-            case MODE_EMAIL_ADDRESS:
+            case FLAG_EMAIL:
                 return Patterns.EMAIL_ADDRESS.pattern();
-            case MODE_WEB_URL:
+            case FLAG_URL:
                 return Patterns.WEB_URL.pattern();
-            default:
-                throw new IllegalArgumentException("Invalid mode!");
+            default: throw new IllegalStateException("Invalid mode!");
         }
     }
 }

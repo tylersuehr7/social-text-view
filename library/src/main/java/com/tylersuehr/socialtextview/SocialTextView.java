@@ -2,20 +2,12 @@ package com.tylersuehr.socialtextview;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.RectF;
 import android.support.annotation.ColorInt;
-import android.text.Layout;
-import android.text.Selection;
-import android.text.Spannable;
+import android.support.v7.widget.AppCompatTextView;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.TextPaint;
-import android.text.method.LinkMovementMethod;
-import android.text.style.ClickableSpan;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -24,15 +16,7 @@ import java.util.regex.Pattern;
  * Copyright 2017 Tyler Suehr
  * Created by tyler on 1/21/2017.
  */
-public class SocialTextView extends TextView {
-    // Usable flags
-    private static final int FLAG_HASHTAG = 1;
-    private static final int FLAG_MENTION = 2;
-    private static final int FLAG_PHONE = 4;
-    private static final int FLAG_EMAIL = 8;
-    private static final int FLAG_URL = 15;
-
-    // Usable attributes
+public class SocialTextView extends AppCompatTextView {
     private boolean underlineEnabled;
     private int selectedColor;
     private int hashtagColor;
@@ -57,36 +41,18 @@ public class SocialTextView extends TextView {
         super(c, attrs, def);
 
         // Setup defaults
-        setMovementMethod(CustomMovementMethod.getInstance());
+        setMovementMethod(AccurateMovementMethod.getInstance());
 
         // Set XML attributes
         TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.SocialTextView);
         int flags = a.getInteger(R.styleable.SocialTextView_linkModes, -1);
         if (flags != -1) {
-            // Check for hashtag flag
-            if ((flags&FLAG_HASHTAG) == FLAG_HASHTAG) {
-                modes.add(new LinkMode(LinkMode.MODE_HASHTAG));
-            }
-
-            // Check for mention flag
-            if ((flags&FLAG_MENTION) == FLAG_MENTION) {
-                modes.add(new LinkMode(LinkMode.MODE_MENTION));
-            }
-
-            // Check for phone flag
-            if ((flags&FLAG_PHONE) == FLAG_PHONE) {
-                modes.add(new LinkMode(LinkMode.MODE_PHONE));
-            }
-
-            // Check for email flag
-            if ((flags&FLAG_EMAIL) == FLAG_EMAIL) {
-                modes.add(new LinkMode(LinkMode.MODE_EMAIL_ADDRESS));
-            }
-
-            // Check for URL flag
-            if ((flags&FLAG_URL) == FLAG_URL) {
-                modes.add(new LinkMode(LinkMode.MODE_WEB_URL));
-            }
+            // Check for any flags, add a LinkMode for the appropriate flag
+            checkAddFlag(flags, LinkMode.FLAG_HASHTAG);
+            checkAddFlag(flags, LinkMode.FLAG_MENTION);
+            checkAddFlag(flags, LinkMode.FLAG_PHONE);
+            checkAddFlag(flags, LinkMode.FLAG_EMAIL);
+            checkAddFlag(flags, LinkMode.FLAG_URL);
         }
 
         // Set given colors if possible
@@ -99,8 +65,9 @@ public class SocialTextView extends TextView {
         underlineEnabled = a.getBoolean(R.styleable.SocialTextView_underlineEnabled, false);
 
         // Set given text if possible
-        String text = a.getString(R.styleable.SocialTextView_android_text);
-        setLinkText(text != null ? text : "");
+        if (a.hasValue(R.styleable.SocialTextView_android_text)) {
+            setLinkText(a.getString(R.styleable.SocialTextView_android_text));
+        }
 
         a.recycle();
     }
@@ -119,49 +86,14 @@ public class SocialTextView extends TextView {
         append(createSpannableString(text));
     }
 
-    public void addLinkModes(LinkMode... modes) {
-        for (LinkMode mode : modes) {
-            if (this.modes.contains(mode)) {
-                throw new IllegalArgumentException("Mode already exists!");
-            }
-            this.modes.add(mode);
-        }
-    }
-
-    public void setHashtagModeColor(@ColorInt int hashtagModeColor) {
-        this.hashtagColor = hashtagModeColor;
-    }
-
-    public void setMentionModeColor(@ColorInt int mentionModeColor) {
-        this.mentionColor = mentionModeColor;
-    }
-
-    public void setPhoneModeColor(@ColorInt int phoneModeColor) {
-        this.phoneColor = phoneModeColor;
-    }
-
-    public void setEmailModeColor(@ColorInt int emailModeColor) {
-        this.emailColor = emailModeColor;
-    }
-
-    public void setUrlModeColor(@ColorInt int urlModeColor) {
-        this.urlColor = urlModeColor;
-    }
-
-    public void setSelectedStateColor(@ColorInt int defaultSelectedColor) {
-        this.selectedColor = defaultSelectedColor;
-    }
-
-    public void setUnderlineEnabled(boolean value) {
-        this.underlineEnabled = value;
-    }
-
     public void setLinkClickListener(LinkClickListener listener) {
         this.listener = listener;
     }
 
-    public LinkClickListener getLinkClickListener() {
-        return listener;
+    private void checkAddFlag(int flags, int flag) {
+        if ((flags&flag) == flag) {
+            this.modes.add(new LinkMode(flag));
+        }
     }
 
     /**
@@ -206,17 +138,23 @@ public class SocialTextView extends TextView {
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(text);
 
-            if (mode.getMode() == LinkMode.MODE_PHONE) {
+            if (mode.getMode() == LinkMode.FLAG_PHONE) {
                 while (matcher.find()) {
                     if (matcher.group().length() > 8) { // Min phone number length in US is 8
-                        items.add(new LinkItem(matcher.start(), matcher.end(),
-                                matcher.group(), mode));
+                        items.add(new LinkItem(
+                                matcher.start(),
+                                matcher.end(),
+                                matcher.group(),
+                                mode));
                     }
                 }
             } else {
                 while (matcher.find()) {
-                    items.add(new LinkItem(matcher.start(), matcher.end(),
-                            matcher.group(), mode));
+                    items.add(new LinkItem(
+                            matcher.start(),
+                            matcher.end(),
+                            matcher.group(),
+                            mode));
                 }
             }
         }
@@ -229,145 +167,22 @@ public class SocialTextView extends TextView {
      * @param mode {@link LinkMode}
      * @return Color
      */
-    @ColorInt private int getColorByMode(LinkMode mode) {
+    @ColorInt
+    private int getColorByMode(LinkMode mode) {
         switch (mode.getMode()) {
-            case LinkMode.MODE_HASHTAG:
+            case LinkMode.FLAG_HASHTAG:
                 return hashtagColor;
-            case LinkMode.MODE_MENTION:
+            case LinkMode.FLAG_MENTION:
                 return mentionColor;
-            case LinkMode.MODE_PHONE:
+            case LinkMode.FLAG_PHONE:
                 return phoneColor;
-            case LinkMode.MODE_EMAIL_ADDRESS:
+            case LinkMode.FLAG_EMAIL:
                 return emailColor;
-            case LinkMode.MODE_WEB_URL:
+            case LinkMode.FLAG_URL:
                 return urlColor;
-            default:
-                throw new IllegalArgumentException("Invalid mode!");
+            default: throw new IllegalArgumentException("Invalid mode!");
         }
     }
-
-    /**
-     * This will detect when the user touches the link accurately. More accurate than
-     * {@link LinkMovementMethod}.
-     */
-    private final static class CustomMovementMethod extends LinkMovementMethod {
-        private static CustomMovementMethod instance;
-        private final RectF touchBounds = new RectF();
-        private TouchableSpan pressedSpan;
-
-
-        public static synchronized CustomMovementMethod getInstance() {
-            if (instance == null) {
-                instance = new CustomMovementMethod();
-            }
-            return instance;
-        }
-
-        @Override
-        public boolean onTouchEvent(TextView widget, Spannable buffer, MotionEvent event) {
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    pressedSpan = getTouchedSpan(widget, buffer, event);
-                    if (pressedSpan != null) {
-                        pressedSpan.setPressed(true);
-                        Selection.setSelection(buffer,  buffer.getSpanStart(pressedSpan), buffer.getSpanEnd(pressedSpan));
-                    }
-                    break;
-
-                case MotionEvent.ACTION_MOVE:
-                    TouchableSpan pressedSpan2 = getTouchedSpan(widget, buffer, event);
-                    if (pressedSpan != null && pressedSpan2 != pressedSpan) {
-                        pressedSpan.setPressed(false);
-                        pressedSpan = null;
-                        Selection.removeSelection(buffer);
-                    }
-                    break;
-
-                default:
-                    if (pressedSpan != null) {
-                        pressedSpan.setPressed(false);
-                        super.onTouchEvent(widget, buffer, event);
-                    }
-                    pressedSpan = null;
-                    Selection.removeSelection(buffer);
-                    break;
-            }
-            return true;
-        }
-
-        /**
-         * Gets the span that was touched.
-         * @param tv {@link TextView}
-         * @param span {@link Spannable}
-         * @param e {@link MotionEvent}
-         * @return {@link TouchableSpan}
-         */
-        private TouchableSpan getTouchedSpan(TextView tv, Spannable span, MotionEvent e) {
-            // Find the location in which the touch was made
-            int x = (int)e.getX();
-            int y = (int)e.getY();
-
-            // Ignore padding
-            x -= tv.getTotalPaddingLeft();
-            y -= tv.getTotalPaddingTop();
-
-            // Account for scrollable text
-            x += tv.getScrollX();
-            y += tv.getScrollY();
-
-            final Layout layout = tv.getLayout();
-            final int touchedLine = layout.getLineForVertical(y);
-            final int touchOffset = layout.getOffsetForHorizontal(touchedLine, x);
-
-            // Set bounds of the touched line
-            touchBounds.left = layout.getLineLeft(touchedLine);
-            touchBounds.top = layout.getLineTop(touchedLine);
-            touchBounds.right = layout.getLineRight(touchedLine);
-            touchBounds.bottom = layout.getLineBottom(touchedLine);
-
-            // Ensure the span falls within the bounds of the touch
-            TouchableSpan touchSpan = null;
-            if (touchBounds.contains(x, y)) {
-                // Find clickable spans that lie under the touched area
-                TouchableSpan[] spans = span.getSpans(touchOffset, touchOffset, TouchableSpan.class);
-                touchSpan = (spans.length > 0) ? spans[0] : null;
-            }
-
-            return touchSpan;
-        }
-    }
-
-    /**
-     * This will allow us to set specific colors for when the users has pressed
-     * the link; also allows underlining of the pressed link's text.
-     */
-    private static abstract class TouchableSpan extends ClickableSpan {
-        private final boolean underlineEnabled;
-        private final int pressedTextColor;
-        private final int normalTextColor;
-        private boolean pressed;
-
-
-        TouchableSpan(int normalTextColor, int pressedTextColor, boolean underlineEnabled) {
-            this.normalTextColor = normalTextColor;
-            this.pressedTextColor = pressedTextColor;
-            this.underlineEnabled = underlineEnabled;
-        }
-
-        @Override
-        public void updateDrawState(TextPaint ds) {
-            // Determine whether to paint it pressed or normally
-            int textColor = pressed ? pressedTextColor : normalTextColor;
-            ds.setColor(textColor);
-            ds.bgColor = Color.TRANSPARENT;
-            ds.setUnderlineText(underlineEnabled);
-        }
-
-        void setPressed(boolean value) {
-            this.pressed = value;
-        }
-    }
-
 
     public interface LinkClickListener {
         void onLinkClicked(LinkMode mode, String matched);

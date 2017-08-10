@@ -5,6 +5,10 @@ import android.widget.Toast;
 import com.tylersuehr.socialtextview.LinkMode;
 import com.tylersuehr.socialtextview.SocialTextView;
 
+/**
+ * Copyright 2017 Tyler Suehr
+ * Created by tyler on 1/21/2017.
+ */
 public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {

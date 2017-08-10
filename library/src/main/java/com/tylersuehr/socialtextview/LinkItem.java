@@ -3,6 +3,9 @@ package com.tylersuehr.socialtextview;
 /**
  * Copyright 2017 Tyler Suehr
  * Created by tyler on 1/21/2017.
+ *
+ * This is a simple model to store any type of link item we want to detect in our
+ * {@link SocialTextView}.
  */
 class LinkItem {
     private final LinkMode mode;
@@ -18,19 +21,19 @@ class LinkItem {
         this.mode = mode;
     }
 
-    public LinkMode getMode() {
+    LinkMode getMode() {
         return mode;
     }
 
-    public String getMatched() {
+    String getMatched() {
         return matched;
     }
 
-    public int getStart() {
+    int getStart() {
         return start;
     }
 
-    public int getEnd() {
+    int getEnd() {
         return end;
     }
 }

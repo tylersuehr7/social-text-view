@@ -5,7 +5,7 @@
         <flag name="mention" value="2"/>
         <flag name="phone" value="4"/>
         <flag name="email" value="8"/>
-        <flag name="url" value="15"/>
+        <flag name="url" value="16"/>
     </attr>
 
     <declare-styleable name="SocialTextView">
