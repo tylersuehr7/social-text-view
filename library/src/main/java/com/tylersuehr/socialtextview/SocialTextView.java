@@ -50,8 +50,8 @@ public class SocialTextView extends AppCompatTextView {
             // Check for any flags, add a LinkMode for the appropriate flag
             checkAddFlag(flags, LinkMode.FLAG_HASHTAG);
             checkAddFlag(flags, LinkMode.FLAG_MENTION);
-            checkAddFlag(flags, LinkMode.FLAG_PHONE);
             checkAddFlag(flags, LinkMode.FLAG_EMAIL);
+            checkAddFlag(flags, LinkMode.FLAG_PHONE);
             checkAddFlag(flags, LinkMode.FLAG_URL);
         }
 
@@ -78,51 +78,35 @@ public class SocialTextView extends AppCompatTextView {
         super.setHighlightColor(Color.TRANSPARENT);
     }
 
+    /**
+     * Checks for any link spans and sets the text using {@link #setText(CharSequence)}.
+     * @param text {@link CharSequence}
+     */
     public void setLinkText(CharSequence text) {
-        setText(createSpannableString(text));
+        setText(createLinkSpan(text));
     }
 
+    /**
+     * Checks for any link spans and appends the text using {@link #append(CharSequence)}}.
+     * @param text {@link CharSequence}
+     */
     public void appendLinkText(CharSequence text) {
-        append(createSpannableString(text));
+        append(createLinkSpan(text));
     }
 
     public void setLinkClickListener(LinkClickListener listener) {
         this.listener = listener;
     }
 
+    /**
+     * Checks if a flag exists in the given flags and adds a {@link LinkMode} accordingly.
+     * @param flags Flags
+     * @param flag Flag
+     */
     private void checkAddFlag(int flags, int flag) {
         if ((flags&flag) == flag) {
             this.modes.add(new LinkMode(flag));
         }
-    }
-
-    /**
-     * Creates a {@link SpannableString} that sets the color of every matched link item for
-     * each corresponding mode.
-     * @param text Text to match
-     * @return {@link SpannableString}
-     */
-    private SpannableString createSpannableString(CharSequence text) {
-        final SpannableString textSpan = new SpannableString(text);
-        final Set<LinkItem> items = getMatchedLinkItems(text);
-
-        int color;
-        for (final LinkItem item : items) {
-            color = getColorByMode(item.getMode());
-            TouchableSpan touchSpan = new TouchableSpan(color, selectedColor, underlineEnabled) {
-                @Override
-                public void onClick(View widget) {
-                    if (listener != null) {
-                        listener.onLinkClicked(item.getMode(), item.getMatched());
-                    }
-                }
-            };
-
-            textSpan.setSpan(touchSpan, item.getStart(), item.getEnd(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        return textSpan;
     }
 
     /**
@@ -132,7 +116,6 @@ public class SocialTextView extends AppCompatTextView {
      */
     private Set<LinkItem> getMatchedLinkItems(CharSequence text) {
         Set<LinkItem> items = new HashSet<>();
-
         for (LinkMode mode : modes) {
             String regex = mode.getPattern();
             Pattern pattern = Pattern.compile(regex);
@@ -163,6 +146,35 @@ public class SocialTextView extends AppCompatTextView {
     }
 
     /**
+     * Creates a {@link SpannableString} that sets the color of every matched link item for
+     * each corresponding mode.
+     * @param text Text to match
+     * @return {@link SpannableString}
+     */
+    private SpannableString createLinkSpan(CharSequence text) {
+        final SpannableString textSpan = new SpannableString(text);
+        final Set<LinkItem> items = getMatchedLinkItems(text);
+
+        int color;
+        for (final LinkItem item : items) {
+            color = getColorByMode(item.getMode());
+            TouchableSpan touchSpan = new TouchableSpan(color, selectedColor, underlineEnabled) {
+                @Override
+                public void onClick(View widget) {
+                    if (listener != null) {
+                        listener.onLinkClicked(item.getMode(), item.getMatched());
+                    }
+                }
+            };
+
+            textSpan.setSpan(touchSpan, item.getStart(), item.getEnd(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return textSpan;
+    }
+
+    /**
      * Gets the corresponding color for a given mode.
      * @param mode {@link LinkMode}
      * @return Color
@@ -184,6 +196,10 @@ public class SocialTextView extends AppCompatTextView {
         }
     }
 
+
+    /**
+     * Callbacks for link touch events.
+     */
     public interface LinkClickListener {
         void onLinkClicked(LinkMode mode, String matched);
     }
