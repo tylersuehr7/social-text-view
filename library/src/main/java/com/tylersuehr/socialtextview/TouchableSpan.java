@@ -2,9 +2,9 @@ package com.tylersuehr.socialtextview;
 import android.graphics.Color;
 import android.text.TextPaint;
 import android.text.style.ClickableSpan;
+
 /**
- * Copyright 2017 Tyler Suehr
- * Created by tyler on 8/10/2017.
+ * Copyright © 2017 Tyler Suehr
  *
  * This subclass of {@link ClickableSpan} will change the text's color when touched. It also
  * gives us the ability to underline the text as well.
@@ -13,6 +13,9 @@ import android.text.style.ClickableSpan;
  * touched color, and when the flag is false, the span will draw the normal color.
  *
  * To amend the 'pressed' flag, call: {@link #setPressed(boolean)}.
+ *
+ * @author Tyler Suehr
+ * @version 1.0
  */
 public abstract class TouchableSpan extends ClickableSpan {
     private final boolean underlineEnabled;

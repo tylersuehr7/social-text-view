@@ -10,6 +10,7 @@
 
     <declare-styleable name="SocialTextView">
         <attr name="android:text"/>
+        <attr name="android:hint"/>
         <attr name="underlineEnabled" format="boolean"/>
         <attr name="hashtagColor" format="color"/>
         <attr name="mentionColor" format="color"/>

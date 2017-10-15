@@ -6,14 +6,17 @@ import android.text.Spannable;
 import android.text.method.LinkMovementMethod;
 import android.view.MotionEvent;
 import android.widget.TextView;
+
 /**
- * Copyright 2017 Tyler Suehr
- * Created by tyler on 8/10/2017.
+ * Copyright © 2017 Tyler Suehr
  *
  * This subclass of {@link LinkMovementMethod} detects link touch events much more accurately.
  *
  * It works by storing the touch bounds in a {@link RectF} and checking if any of the spans
  * are contained with the bounds of the touched area.
+ *
+ * @author Tyler Suehr
+ * @version 1.0
  */
 public class AccurateMovementMethod extends LinkMovementMethod {
     private static AccurateMovementMethod instance;

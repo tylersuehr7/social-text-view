@@ -3,20 +3,44 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.support.annotation.ColorInt;
+import android.support.annotation.IntDef;
 import android.support.v7.widget.AppCompatTextView;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.util.AttributeSet;
+import android.util.Patterns;
 import android.view.View;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.CLASS;
+
 /**
- * Copyright 2017 Tyler Suehr
- * Created by tyler on 1/21/2017.
+ * Copyright © 2017 Tyler Suehr
+ *
+ * @author Tyler Suehr
+ * @version 1.0
  */
 public class SocialTextView extends AppCompatTextView {
+    /* Constants for social media flags */
+    private static final int HASHTAG = 1;
+    private static final int MENTION = 2;
+    private static final int PHONE   = 4;
+    private static final int EMAIL   = 8;
+    private static final int URL    = 16;
+
+    private static Pattern patternHashtag;
+    private static Pattern patternMention;
+
+    /* Mutable properties */
     private boolean underlineEnabled;
     private int selectedColor;
     private int hashtagColor;
@@ -25,8 +49,10 @@ public class SocialTextView extends AppCompatTextView {
     private int emailColor;
     private int urlColor ;
 
-    private final Set<LinkMode> modes = new HashSet<>();
-    private LinkClickListener listener;
+    private OnLinkClickListener linkClickListener;
+
+    /* Stores enabled link modes */
+    private int flags;
 
 
     public SocialTextView(Context c) {
@@ -40,167 +66,210 @@ public class SocialTextView extends AppCompatTextView {
     public SocialTextView(Context c, AttributeSet attrs, int def) {
         super(c, attrs, def);
 
-        // Setup defaults
+        // Set the link movement method by default
         setMovementMethod(AccurateMovementMethod.getInstance());
 
         // Set XML attributes
         TypedArray a = c.obtainStyledAttributes(attrs, R.styleable.SocialTextView);
-        int flags = a.getInteger(R.styleable.SocialTextView_linkModes, -1);
-        if (flags != -1) {
-            // Check for any flags, add a LinkMode for the appropriate flag
-            checkAddFlag(flags, LinkMode.FLAG_HASHTAG);
-            checkAddFlag(flags, LinkMode.FLAG_MENTION);
-            checkAddFlag(flags, LinkMode.FLAG_EMAIL);
-            checkAddFlag(flags, LinkMode.FLAG_PHONE);
-            checkAddFlag(flags, LinkMode.FLAG_URL);
-        }
-
-        // Set given colors if possible
-        hashtagColor = a.getColor(R.styleable.SocialTextView_hashtagColor, Color.RED);
-        mentionColor = a.getColor(R.styleable.SocialTextView_mentionColor, Color.RED);
-        phoneColor = a.getColor(R.styleable.SocialTextView_phoneColor, Color.RED);
-        emailColor = a.getColor(R.styleable.SocialTextView_emailColor, Color.RED);
-        urlColor = a.getColor(R.styleable.SocialTextView_urlColor, Color.RED);
-        selectedColor = a.getColor(R.styleable.SocialTextView_selectedColor, Color.LTGRAY);
-        underlineEnabled = a.getBoolean(R.styleable.SocialTextView_underlineEnabled, false);
-
-        // Set given text if possible
+        this.flags = a.getInt(R.styleable.SocialTextView_linkModes, -1);
+        this.hashtagColor = a.getColor(R.styleable.SocialTextView_hashtagColor, Color.RED);
+        this.mentionColor = a.getColor(R.styleable.SocialTextView_mentionColor, Color.RED);
+        this.phoneColor = a.getColor(R.styleable.SocialTextView_phoneColor, Color.RED);
+        this.emailColor = a.getColor(R.styleable.SocialTextView_emailColor, Color.RED);
+        this.urlColor = a.getColor(R.styleable.SocialTextView_urlColor, Color.RED);
+        this.selectedColor = a.getColor(R.styleable.SocialTextView_selectedColor, Color.LTGRAY);
+        this.underlineEnabled = a.getBoolean(R.styleable.SocialTextView_underlineEnabled, false);
         if (a.hasValue(R.styleable.SocialTextView_android_text)) {
             setLinkText(a.getString(R.styleable.SocialTextView_android_text));
         }
-
+        if (a.hasValue(R.styleable.SocialTextView_android_hint)) {
+            setLinkHint(a.getString(R.styleable.SocialTextView_android_hint));
+        }
         a.recycle();
     }
 
+    /**
+     * Overridden to ensure that highlighted text is always transparent.
+     */
     @Override
-    public void setHighlightColor(int color) {
-        // Make sure that the text highlighted is always transparent
+    public void setHighlightColor(@ColorInt int color) {
         super.setHighlightColor(Color.TRANSPARENT);
     }
 
-    /**
-     * Checks for any link spans and sets the text using {@link #setText(CharSequence)}.
-     * @param text {@link CharSequence}
-     */
-    public void setLinkText(CharSequence text) {
-        setText(createLinkSpan(text));
+    public void setLinkText(String text) {
+        setText(createSocialMediaSpan(text));
+    }
+
+    public void appendLinkText(String text) {
+        append(createSocialMediaSpan(text));
+    }
+
+    public void setLinkHint(String textHint) {
+        setHint(createSocialMediaSpan(textHint));
+    }
+
+    public void setOnLinkClickListener(OnLinkClickListener linkClickListener) {
+        this.linkClickListener = linkClickListener;
+    }
+
+    public OnLinkClickListener getOnLinkClickListener() {
+        return linkClickListener;
     }
 
     /**
-     * Checks for any link spans and appends the text using {@link #append(CharSequence)}}.
-     * @param text {@link CharSequence}
-     */
-    public void appendLinkText(CharSequence text) {
-        append(createLinkSpan(text));
-    }
-
-    public void setLinkClickListener(LinkClickListener listener) {
-        this.listener = listener;
-    }
-
-    /**
-     * Checks if a flag exists in the given flags and adds a {@link LinkMode} accordingly.
-     * @param flags Flags
-     * @param flag Flag
-     */
-    private void checkAddFlag(int flags, int flag) {
-        if ((flags&flag) == flag) {
-            this.modes.add(new LinkMode(flag));
-        }
-    }
-
-    /**
-     * Collect link items for every matched link mode in the given text.
-     * @param text Text to match
-     * @return Set of {@link LinkItem}
-     */
-    private Set<LinkItem> getMatchedLinkItems(CharSequence text) {
-        Set<LinkItem> items = new HashSet<>();
-        for (LinkMode mode : modes) {
-            String regex = mode.getPattern();
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(text);
-
-            if (mode.getMode() == LinkMode.FLAG_PHONE) {
-                while (matcher.find()) {
-                    if (matcher.group().length() > 8) { // Min phone number length in US is 8
-                        items.add(new LinkItem(
-                                matcher.start(),
-                                matcher.end(),
-                                matcher.group(),
-                                mode));
-                    }
-                }
-            } else {
-                while (matcher.find()) {
-                    items.add(new LinkItem(
-                            matcher.start(),
-                            matcher.end(),
-                            matcher.group(),
-                            mode));
-                }
-            }
-        }
-
-        return items;
-    }
-
-    /**
-     * Creates a {@link SpannableString} that sets the color of every matched link item for
-     * each corresponding mode.
-     * @param text Text to match
+     * Creates a spannable string containing the touchable spans of each link item
+     * for each enabled link mode in the given text.
+     *
+     * @param text Text
      * @return {@link SpannableString}
      */
-    private SpannableString createLinkSpan(CharSequence text) {
+    private SpannableString createSocialMediaSpan(String text) {
+        final Set<LinkItem> items = collectLinkItemsFromText(text);
         final SpannableString textSpan = new SpannableString(text);
-        final Set<LinkItem> items = getMatchedLinkItems(text);
 
-        int color;
+        // Create a span for each link item
         for (final LinkItem item : items) {
-            color = getColorByMode(item.getMode());
-            TouchableSpan touchSpan = new TouchableSpan(color, selectedColor, underlineEnabled) {
+            textSpan.setSpan(new TouchableSpan(getColorByMode(item.mode), selectedColor, underlineEnabled) {
                 @Override
                 public void onClick(View widget) {
-                    if (listener != null) {
-                        listener.onLinkClicked(item.getMode(), item.getMatched());
+                    // Trigger callback when span is touched
+                    if (linkClickListener != null) {
+                        linkClickListener.onLinkClicked(item.mode, item.matched);
                     }
                 }
-            };
-
-            textSpan.setSpan(touchSpan, item.getStart(), item.getEnd(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }, item.start, item.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         return textSpan;
     }
 
     /**
+     * Checks which flags are enable so that the appropriate link items can be
+     * collected from each respective mode.
+     *
+     * @param text Text
+     * @return Set of {@link LinkItem}
+     */
+    private Set<LinkItem> collectLinkItemsFromText(String text) {
+        final Set<LinkItem> items = new HashSet<>();
+
+        // Check for hashtag links, if possible
+        if ((flags&HASHTAG) == HASHTAG) {
+            collectLinkItems(HASHTAG, items, getHashtagPattern().matcher(text));
+        }
+
+        // Check for mention links, if possible
+        if ((flags&MENTION) == MENTION) {
+            collectLinkItems(MENTION, items, getMentionPattern().matcher(text));
+        }
+
+        // Check for phone links, if possible
+        if ((flags&PHONE) == PHONE) {
+            collectLinkItems(PHONE, items, Patterns.PHONE.matcher(text));
+        }
+
+        // Check for email links, if possible
+        if ((flags&EMAIL) == EMAIL) {
+            collectLinkItems(EMAIL, items, Patterns.EMAIL_ADDRESS.matcher(text));
+        }
+
+        // Check for url links, if possible
+        if ((flags&URL) == URL) {
+            collectLinkItems(URL, items, Patterns.WEB_URL.matcher(text));
+        }
+
+        return items;
+    }
+
+    /**
+     * Iterates through all the matches found by the given matcher and adds a new
+     * {@link LinkItem} for each match into the given collection of link items.
+     *
+     * @param mode {@link LinkOptions}
+     * @param items Collection of {@link LinkItem}
+     * @param matcher {@link Matcher}
+     */
+    private void collectLinkItems(@LinkOptions int mode, Collection<LinkItem> items, Matcher matcher) {
+        while (matcher.find()) {
+            items.add(new LinkItem(
+                    matcher.group(),
+                    matcher.start(),
+                    matcher.end(),
+                    mode
+            ));
+        }
+    }
+
+    /**
      * Gets the corresponding color for a given mode.
-     * @param mode {@link LinkMode}
+     *
+     * @param mode {@link #HASHTAG}, {@link #MENTION}, {@link #EMAIL}, {@link #PHONE}, {@link #URL}
      * @return Color
      */
-    @ColorInt
-    private int getColorByMode(LinkMode mode) {
-        switch (mode.getMode()) {
-            case LinkMode.FLAG_HASHTAG:
-                return hashtagColor;
-            case LinkMode.FLAG_MENTION:
-                return mentionColor;
-            case LinkMode.FLAG_PHONE:
-                return phoneColor;
-            case LinkMode.FLAG_EMAIL:
-                return emailColor;
-            case LinkMode.FLAG_URL:
-                return urlColor;
+    private int getColorByMode(@LinkOptions int mode) {
+        switch (mode) {
+            case HASHTAG: return hashtagColor;
+            case MENTION: return mentionColor;
+            case PHONE:   return phoneColor;
+            case EMAIL:   return emailColor;
+            case URL:     return urlColor;
             default: throw new IllegalArgumentException("Invalid mode!");
         }
     }
 
+    /**
+     * Lazy loads the 'hashtag' regex pattern.
+     *
+     * @return {@link Pattern}
+     */
+    private static Pattern getHashtagPattern() {
+        if (patternHashtag == null) {
+            patternHashtag = Pattern.compile("(?:^|\\s|$)#[\\p{L}0-9_]*");
+        }
+        return patternHashtag;
+    }
 
     /**
-     * Callbacks for link touch events.
+     * Lazy loads the 'mention' regex pattern.
+     *
+     * @return {@link Pattern}
      */
-    public interface LinkClickListener {
-        void onLinkClicked(LinkMode mode, String matched);
+    private static Pattern getMentionPattern() {
+        if (patternMention == null) {
+            patternMention = Pattern.compile("(?:^|\\s|$|[.])@[\\p{L}0-9_]*");
+        }
+        return patternMention;
+    }
+
+
+    /**
+     * Data structure to store information about a link.
+     */
+    private final class LinkItem {
+        private final String matched;
+        private final int start;
+        private final int end;
+        private final int mode;
+
+        private LinkItem(String matched, int start, int end, int mode) {
+            this.matched = matched;
+            this.start = start;
+            this.end = end;
+            this.mode = mode;
+        }
+    }
+
+
+    @Retention(CLASS)
+    @Target({PARAMETER,METHOD,LOCAL_VARIABLE,FIELD})
+    @IntDef(value = {HASHTAG, MENTION, PHONE, EMAIL, URL})
+    public @interface LinkOptions {}
+
+
+    /**
+     * Listener for link clicks in text view.
+     */
+    public interface OnLinkClickListener {
+        void onLinkClicked(int linkType, String matchedText);
     }
 }
