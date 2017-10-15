@@ -8,8 +8,7 @@ you press near it sometimes. The custom implementation I had built, `LinkTouchMo
 fixes that by using a `RectF` to store the bounds of each link and
 making sure when you touch it, it's within the bounds before triggering the callback.
 
-### Example
-![Screenshot](https://github.com/tylersuehr7/socialtextview/blob/master/img_example.png "Screenshot")
+<img src="https://github.com/tylersuehr7/socialtextview/blob/master/docs/screen_links.png" width="200">
 
 #### Example Layout Usage:
 ```xml
