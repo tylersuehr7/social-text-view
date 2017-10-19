@@ -7,11 +7,6 @@ Core features of this library:
 * Highlight social media lingo in text
 * Clickable social media lingo in text
 
-`LinkMovementMethod` has a small bug (at least I think so); it clicks on a link when
-you press near it sometimes. The custom implementation I had built, `LinkTouchMovementMethod`, 
-fixes that by using a `RectF` to store the bounds of each link and
-making sure when you touch it, it's within the bounds before triggering the callback.
-
 ## Using the Social Text View
 The basic usage of this library is to highlight, and make clickable, whenever social media lingo appears in text. To achieve this functionality, you'll need to use the `SocialTextView`.
 
