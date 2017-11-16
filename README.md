@@ -7,6 +7,25 @@ Core features of this library:
 * Highlight social media lingo in text
 * Clickable social media lingo in text
 
+How to use it...
+
+In your project level build.gradle :
+```java
+allprojects {
+    repositories {
+        ...
+        maven { url "https://jitpack.io" }
+    }
+} 
+```
+
+In your app level build.gradle:
+```java
+dependencies {
+    compile 'com.github.tylersuehr7:social-text-view:1.0.0'
+}  
+```
+
 ## Using the Social Text View
 The basic usage of this library is to highlight, and make clickable, whenever social media lingo appears in text. To achieve this functionality, you'll need to use the `SocialTextView`.
 
