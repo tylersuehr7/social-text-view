@@ -191,9 +191,16 @@ public class SocialTextView extends AppCompatTextView {
      */
     private void collectLinkItems(@LinkOptions int mode, Collection<LinkItem> items, Matcher matcher) {
         while (matcher.find()) {
+            int matcherStart = matcher.start();
+            String matchedText = matcher.group();
+
+            if (matchedText.startsWith(" ")){
+                matcherStart += 1;
+                matchedText = matchedText.substring(1);
+            }
             items.add(new LinkItem(
-                    matcher.group(),
-                    matcher.start(),
+                    matchedText,
+                    matcherStart,
                     matcher.end(),
                     mode
             ));
