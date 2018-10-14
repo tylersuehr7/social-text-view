@@ -11,6 +11,7 @@ import android.util.AttributeSet;
 import android.util.Patterns;
 import android.view.View;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Collection;
 import java.util.HashSet;
@@ -267,7 +268,7 @@ public class SocialTextView extends AppCompatTextView {
     }
 
 
-    @Retention(CLASS)
+    @Retention(RetentionPolicy.SOURCE)
     @Target({PARAMETER,METHOD,LOCAL_VARIABLE,FIELD})
     @IntDef(value = {HASHTAG, MENTION, PHONE, EMAIL, URL})
     public @interface LinkOptions {}
