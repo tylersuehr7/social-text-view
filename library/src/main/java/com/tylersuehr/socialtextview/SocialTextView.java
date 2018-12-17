@@ -1,4 +1,5 @@
 package com.tylersuehr.socialtextview;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -10,6 +11,7 @@ import android.text.Spanned;
 import android.util.AttributeSet;
 import android.util.Patterns;
 import android.view.View;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -18,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.LOCAL_VARIABLE;
 import static java.lang.annotation.ElementType.METHOD;
@@ -34,9 +37,9 @@ public class SocialTextView extends AppCompatTextView {
     /* Constants for social media flags */
     private static final int HASHTAG = 1;
     private static final int MENTION = 2;
-    private static final int PHONE   = 4;
-    private static final int EMAIL   = 8;
-    private static final int URL    = 16;
+    private static final int PHONE = 4;
+    private static final int URL = 8;
+    private static final int EMAIL = 16;
 
     private static Pattern patternHashtag;
     private static Pattern patternMention;
@@ -48,7 +51,7 @@ public class SocialTextView extends AppCompatTextView {
     private int mentionColor;
     private int phoneColor;
     private int emailColor;
-    private int urlColor ;
+    private int urlColor;
 
     private OnLinkClickListener linkClickListener;
 
@@ -155,28 +158,28 @@ public class SocialTextView extends AppCompatTextView {
         final Set<LinkItem> items = new HashSet<>();
 
         // Check for hashtag links, if possible
-        if ((flags&HASHTAG) == HASHTAG) {
+        if ((flags & HASHTAG) == HASHTAG) {
             collectLinkItems(HASHTAG, items, getHashtagPattern().matcher(text));
         }
 
         // Check for mention links, if possible
-        if ((flags&MENTION) == MENTION) {
+        if ((flags & MENTION) == MENTION) {
             collectLinkItems(MENTION, items, getMentionPattern().matcher(text));
         }
 
         // Check for phone links, if possible
-        if ((flags&PHONE) == PHONE) {
+        if ((flags & PHONE) == PHONE) {
             collectLinkItems(PHONE, items, Patterns.PHONE.matcher(text));
         }
 
-        // Check for email links, if possible
-        if ((flags&EMAIL) == EMAIL) {
-            collectLinkItems(EMAIL, items, Patterns.EMAIL_ADDRESS.matcher(text));
+        // Check for url links, if possible
+        if ((flags & URL) == URL) {
+            collectLinkItems(URL, items, Patterns.WEB_URL.matcher(text));
         }
 
-        // Check for url links, if possible
-        if ((flags&URL) == URL) {
-            collectLinkItems(URL, items, Patterns.WEB_URL.matcher(text));
+        // Check for email links, if possible
+        if ((flags & EMAIL) == EMAIL) {
+            collectLinkItems(EMAIL, items, Patterns.EMAIL_ADDRESS.matcher(text));
         }
 
         return items;
@@ -186,8 +189,8 @@ public class SocialTextView extends AppCompatTextView {
      * Iterates through all the matches found by the given matcher and adds a new
      * {@link LinkItem} for each match into the given collection of link items.
      *
-     * @param mode {@link LinkOptions}
-     * @param items Collection of {@link LinkItem}
+     * @param mode    {@link LinkOptions}
+     * @param items   Collection of {@link LinkItem}
      * @param matcher {@link Matcher}
      */
     private void collectLinkItems(@LinkOptions int mode, Collection<LinkItem> items, Matcher matcher) {
@@ -195,7 +198,7 @@ public class SocialTextView extends AppCompatTextView {
             int matcherStart = matcher.start();
             String matchedText = matcher.group();
 
-            if (matchedText.startsWith(" ")){
+            if (matchedText.startsWith(" ")) {
                 matcherStart += 1;
                 matchedText = matchedText.substring(1);
             }
@@ -216,12 +219,19 @@ public class SocialTextView extends AppCompatTextView {
      */
     private int getColorByMode(@LinkOptions int mode) {
         switch (mode) {
-            case HASHTAG: return hashtagColor;
-            case MENTION: return mentionColor;
-            case PHONE:   return phoneColor;
-            case EMAIL:   return emailColor;
-            case URL:     return urlColor;
-            default: throw new IllegalArgumentException("Invalid mode!");
+            case HASHTAG:
+                return hashtagColor;
+            case MENTION:
+                return mentionColor;
+            case PHONE:
+                return phoneColor;
+            case URL:
+                return urlColor;
+            case EMAIL:
+                return emailColor;
+
+            default:
+                throw new IllegalArgumentException("Invalid mode!");
         }
     }
 
@@ -269,9 +279,10 @@ public class SocialTextView extends AppCompatTextView {
 
 
     @Retention(RetentionPolicy.SOURCE)
-    @Target({PARAMETER,METHOD,LOCAL_VARIABLE,FIELD})
+    @Target({PARAMETER, METHOD, LOCAL_VARIABLE, FIELD})
     @IntDef(value = {HASHTAG, MENTION, PHONE, EMAIL, URL})
-    public @interface LinkOptions {}
+    public @interface LinkOptions {
+    }
 
 
     /**
