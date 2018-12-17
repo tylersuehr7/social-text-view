@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity implements SocialTextView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SocialTextView textView = (SocialTextView)findViewById(R.id.text_view);
+        SocialTextView textView = findViewById(R.id.text_view);
         textView.setOnLinkClickListener(this);
     }
 
